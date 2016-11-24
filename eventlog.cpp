@@ -1,6 +1,5 @@
-#include "module.h"
+#include "eventlog.h"
 #include "exceptions.h"
-#include "registry.h"
 #include "zend_interfaces.h"
 #include "zend_vm.h"
 #include "zend_execute.h"
@@ -179,8 +178,7 @@ zend_function_entry eventlog_functions[] = {
 	PHP_FE_END
 };
 
-/* Loads the event log classes */
-int load_eventlog_module()
+PHP_MINIT_FUNCTION(WindowsEventLog)
 {
 	INIT_CLASS_ENTRY(ce, EVENTLOG_NS("EventLog"), eventlog_functions);
 	eventlog_log_class = zend_register_internal_class(&ce TSRMLS_CC);
@@ -200,3 +198,13 @@ int load_eventlog_module()
 
 	SUCCESS;
 }
+
+zend_module_entry WindowsEventLog_module_entry = {
+	STANDARD_MODULE_HEADER,
+	"WindowsEventLog",
+	NULL,
+	PHP_MINIT(WindowsEventLog), NULL, NULL, NULL, NULL,
+	NO_VERSION_YET, STANDARD_MODULE_PROPERTIES
+};
+
+ZEND_GET_MODULE(WindowsEventLog)
