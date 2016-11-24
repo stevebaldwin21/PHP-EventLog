@@ -38,21 +38,6 @@ bool zend_ht_val_exists_long(HashTable * HT, long val) {
 	efree(zIterator);
 	return exists;
 }
-bool zend_ht_val_exists_string(HashTable * HT, char * val) {
-	bool exists = false;
-	zval * zIterator;
-	ZEND_HASH_FOREACH_VAL(HT, zIterator);
-	if (stricmp(Z_STRVAL_P(zIterator), val) == 0) {
-		zIterator = NULL;
-		efree(zIterator);
-		exists = true;
-		return exists;
-	}
-	ZEND_HASH_FOREACH_END();
-	zIterator = NULL;
-	efree(zIterator);
-	return exists;
-}
 
 /* {{{ proto EventLog::writeEvent(string message, EventLog::type eventtype) */
 PHP_METHOD(EventLog, writeEntry)
