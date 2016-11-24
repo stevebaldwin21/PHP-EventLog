@@ -1,4 +1,3 @@
-#include "eventlog.h"
 #include "module.h"
 #include "exceptions.h"
 #include "registry.h"
@@ -198,21 +197,6 @@ zend_function_entry eventlog_functions[] = {
 /* Loads the event log classes */
 int load_eventlog_module()
 {
-
-	INIT_CLASS_ENTRY(ce, "Object", NULL);
-	object_class = zend_register_internal_class(&ce TSRMLS_CC);
-
-	INIT_CLASS_ENTRY(ce, "string", string_functions);
-	string_class = zend_register_internal_class(&ce TSRMLS_CC);
-	string_class->ce_flags |= ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
-
-	zend_set_user_opcode_handler(ZEND_NEW, class_handler);
-	zend_set_user_opcode_handler(ZEND_CAST, cast_string_handler);
-	zend_set_user_opcode_handler(ZEND_ASSIGN_CONCAT, concat_string_handler);
-	zend_set_user_opcode_handler(ZEND_ASSIGN, assign_string_handler);
-	zend_set_user_opcode_handler(ZEND_INIT_FCALL, string_function_handler);
-	zend_set_user_opcode_handler(ZEND_RETURN, return_function_handler);
-
 	INIT_CLASS_ENTRY(ce, EVENTLOG_NS("EventLog"), eventlog_functions);
 	eventlog_log_class = zend_register_internal_class(&ce TSRMLS_CC);
 	eventlog_log_class->ce_flags |= ZEND_ACC_FINAL;
