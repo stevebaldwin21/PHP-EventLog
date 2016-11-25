@@ -21,23 +21,6 @@
 * Report bugs to the above email address
 */
 
-/* Iterates the hashtable values looking for a match */
-bool zend_ht_val_exists_long(HashTable * HT, long val) {
-	bool exists = false;
-	zval * zIterator;
-	ZEND_HASH_FOREACH_VAL(HT, zIterator);
-	if (Z_LVAL_P(zIterator), val) {
-		zIterator = NULL;
-		efree(zIterator);
-		exists = true;
-		return exists;
-	}
-	ZEND_HASH_FOREACH_END();
-	zIterator = NULL;
-	efree(zIterator);
-	return exists;
-}
-
 /* {{{ proto EventLog::writeEvent(string message, EventLog::type eventtype) */
 PHP_METHOD(EventLog, writeEntry)
 {
@@ -102,24 +85,28 @@ PHP_METHOD(EventLog, writeEntry)
 	errarg[7] = NULL;
 	errarg[8] = NULL;
 
-	//3299 corrospondes to a generic message in netmsg.dll
+	//3299 a generic message in netmsg.dll - use this with 9 char * array for simple message
 	response = ReportEvent(sourceHandle, eventType, NULL, 3299, NULL, 9, 0, &errarg, NULL);
 
 	if (response == ERROR_INVALID_FUNCTION) 
 	{
 		//this is scenario if the user has not registered their event source
 		//but we shouldn't throw an exception because the log will still be logged. It just will moan about the unregistered source message/resource
-		//see the example of where you can create a source using netmsg.dll via registry.c/registry.h
-		//should we opt for e_error here? I think not!
-
 		php_error_docref("Invalid event source '%s' - has this been registered?", E_ERROR, source);
 	}
 	else 
 	{
 		CloseEventLog(sourceHandle);
+
+		message = NULL;
+		efree(message);
+
 		windows_throw_exception_hres(response);
 		RETURN_FALSE;
 	}
+
+	message = NULL;
+	efree(message);
 
 	CloseEventLog(sourceHandle);
 	RETURN_TRUE;
@@ -135,8 +122,6 @@ PHP_METHOD(EventLog, setSource)
 	ZEND_PARSE_PARAMETERS_START(1, 2);
 		Z_PARAM_STRING_EX(source, sourceLength, 1, 0)
 	ZEND_PARSE_PARAMETERS_END();
-
-	//if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "s", &source) == FAILURE) { return; }
 
 	if (source[0] == '\0' || sourceLength == 0) {
 		windows_throw_exception(windows_invalid_argument_exception, "Please provide a valid source");
@@ -178,7 +163,7 @@ zend_function_entry eventlog_functions[] = {
 	PHP_FE_END
 };
 
-PHP_MINIT_FUNCTION(WindowsEventLog)
+PHP_MINIT_FUNCTION(windows_event_log)
 {
 	INIT_CLASS_ENTRY(ce, EVENTLOG_NS("EventLog"), eventlog_functions);
 	eventlog_log_class = zend_register_internal_class(&ce TSRMLS_CC);
@@ -199,12 +184,19 @@ PHP_MINIT_FUNCTION(WindowsEventLog)
 	SUCCESS;
 }
 
-zend_module_entry WindowsEventLog_module_entry = {
+PHP_MINFO_FUNCTION(windows_event_log)
+{
+	php_info_print_table_start();
+	php_info_print_table_row(2, "Windows Event Log", "enabled");
+	php_info_print_table_end();
+}
+
+zend_module_entry windows_event_log_module_entry = {
 	STANDARD_MODULE_HEADER,
-	"WindowsEventLog",
+	"windows_event_log",
 	NULL,
-	PHP_MINIT(WindowsEventLog), NULL, NULL, NULL, NULL,
+	PHP_MINIT(windows_event_log), NULL, NULL, NULL, NULL,
 	NO_VERSION_YET, STANDARD_MODULE_PROPERTIES
 };
 
-ZEND_GET_MODULE(WindowsEventLog)
+ZEND_GET_MODULE(windows_event_log)
