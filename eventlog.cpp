@@ -33,21 +33,21 @@ PHP_METHOD(EventLog, writeEntry)
 	char * source; 
 	HANDLE sourceHandle = NULL;
 	DWORD dwEventDataSize = 0;
-	zval * zSource;
-	zval * zIterator;
+	zval * this_source;
 
-	zSource = zend_read_static_property(eventlog_log_class, "source", strlen("source"), 1);
+	this_source = zend_read_static_property(eventlog_log_class, "source", strlen("source"), 1);
 
-	if (zSource == NULL || Z_TYPE_P(zSource) == IS_NULL) {
+	if (this_source == NULL || Z_TYPE_P(this_source) == IS_NULL)
+	{
 		windows_throw_exception(windows_invalid_argument_exception, "Please provide a source before attempting to write");
-		zSource = NULL;
-		efree(zSource);
+		this_source = NULL;
+		efree(this_source);
 		RETURN_FALSE;
 	}
 
-	source = Z_STRVAL_P(zSource);
-	zSource = NULL;
-	efree(zSource);
+	source = Z_STRVAL_P(this_source);
+	this_source = NULL;
+	efree(this_source);
 
 	ZEND_PARSE_PARAMETERS_START(1, 2);
 		Z_PARAM_STRING_EX(message, messageLength, 1, 0)
@@ -56,7 +56,8 @@ PHP_METHOD(EventLog, writeEntry)
 	ZEND_PARSE_PARAMETERS_END();
 
 	//validation!
-	if (zend_ht_val_exists_long(&event_class->constants_table, eventType) == false) {
+	if (zend_ht_val_exists_long(&event_class->constants_table, eventType) == false) 
+	{
 		windows_throw_exception(windows_invalid_argument_exception, "Please provide a valid event type using the EventType class");
 		RETURN_FALSE;
 	}
@@ -92,15 +93,13 @@ PHP_METHOD(EventLog, writeEntry)
 	{
 		//this is scenario if the user has not registered their event source
 		//but we shouldn't throw an exception because the log will still be logged. It just will moan about the unregistered source message/resource
-		php_error_docref("Invalid event source '%s' - has this been registered?", E_ERROR, source);
+		php_error(E_WARNING, "Invalid event source '%s' - has this been registered?", source);
 	}
 	else 
 	{
-		CloseEventLog(sourceHandle);
-
 		message = NULL;
 		efree(message);
-
+		CloseEventLog(sourceHandle);
 		windows_throw_exception_hres(response);
 		RETURN_FALSE;
 	}
